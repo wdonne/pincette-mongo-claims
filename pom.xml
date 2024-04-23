@@ -6,7 +6,7 @@
 
   <groupId>net.pincette</groupId>
   <artifactId>pincette-mongo-claims</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <name>pincette-mongo-claims</name>
   <description>Enriches a JWT with claims from a MongoDB query</description>
   <url>https://github.com/wdonne/pincette-mongo-claims</url>
@@ -57,12 +57,12 @@
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-common</artifactId>
-      <version>2.4.0</version>
+      <version>2.4.1</version>
     </dependency>
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-mongo</artifactId>
-      <version>4.1.8</version>
+      <version>4.1.9</version>
     </dependency>
     <dependency>
       <groupId>net.pincette</groupId>
@@ -72,7 +72,7 @@
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-json</artifactId>
-      <version>2.1.1</version>
+      <version>2.1.2</version>
     </dependency>
     <dependency>
       <groupId>com.typesafe</groupId>
@@ -86,7 +86,7 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.4.1</version>
+        <version>3.4.2</version>
         <executions>
           <execution>
             <phase>package</phase>

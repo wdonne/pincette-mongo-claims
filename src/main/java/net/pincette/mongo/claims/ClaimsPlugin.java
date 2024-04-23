@@ -21,6 +21,7 @@ import static net.pincette.json.JsonUtil.toJsonPointer;
 import static net.pincette.json.Transform.transform;
 import static net.pincette.jwt.Util.getJwtPayload;
 import static net.pincette.mongo.JsonClient.aggregate;
+import static net.pincette.util.Collections.concat;
 import static net.pincette.util.Collections.list;
 import static net.pincette.util.Collections.map;
 import static net.pincette.util.Or.tryWith;
@@ -85,6 +86,11 @@ public class ClaimsPlugin implements Plugin {
   private MongoCollection<Document> mongoCollection;
   private Signer signer;
   private Verifier verifier;
+
+  private static HttpHeaders addHeader(
+      final HttpHeaders headers, final String name, final String value) {
+    return setHeader(headers, name, list(value), false);
+  }
 
   private static Optional<File> configFile(final Config config) {
     return ofNullable(config.origin().filename()).map(File::new);
@@ -156,7 +162,7 @@ public class ClaimsPlugin implements Plugin {
 
   private static HttpHeaders setCookie(
       final HttpHeaders headers, final String token, final String domain) {
-    return setHeader(
+    return addHeader(
         headers,
         SET_COOKIE,
         MONGO_CLAIMS_COOKIE
@@ -168,13 +174,20 @@ public class ClaimsPlugin implements Plugin {
 
   private static HttpHeaders setHeader(
       final HttpHeaders headers, final String name, final String value) {
-    return setHeader(headers, name, list(value));
+    return setHeader(headers, name, list(value), true);
   }
 
   private static HttpHeaders setHeader(
-      final HttpHeaders headers, final String name, final List<String> value) {
+      final HttpHeaders headers,
+      final String name,
+      final List<String> value,
+      final boolean replace) {
     return HttpHeaders.of(
-        net.pincette.util.Collections.merge(headers.map(), map(pair(name, value))), (k, v) -> true);
+        net.pincette.util.Collections.merge(
+            Stream.of(headers.map(), map(pair(name, value))),
+            String::toLowerCase,
+            (v1, v2) -> replace ? v2 : concat(v1, v2)),
+        (k, v) -> true);
   }
 
   private static <T> T trace(final T v, final Supplier<String> message) {
