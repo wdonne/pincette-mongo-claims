@@ -8,6 +8,7 @@ The configuration is managed by the [Lightbend Config package](https://github.co
 
 |Entry|Mandatory|Description|
 |---|---|---|
+|mongoClaims.aggregationPipeline|Yes|The MongpoDB aggregation pipeline. All the fields it returns will be added as claims. The result set should have only one entry. Fields in the incoming JWT can be addressed in a pipeline as `${<dot.separated.path>}`. If the value doesn't exist in the token, the result is an empty string.|
 |mongoClaims.database|Yes|The MongoDB database.|
 |mongoClaims.collection|Yes|The MongoDB collection that will be queried.|
 |mongoClaims.issuer|No|The `issuer` field in the generated JWT. It will be the empty string if not set.|

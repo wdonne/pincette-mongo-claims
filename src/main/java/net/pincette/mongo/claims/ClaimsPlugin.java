@@ -12,21 +12,22 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.logging.Level.FINEST;
 import static java.util.logging.Logger.getLogger;
 import static net.pincette.json.JsonUtil.createReader;
-import static net.pincette.json.JsonUtil.getValue;
+import static net.pincette.json.JsonUtil.createValue;
 import static net.pincette.json.JsonUtil.isString;
 import static net.pincette.json.JsonUtil.merge;
 import static net.pincette.json.JsonUtil.string;
 import static net.pincette.json.JsonUtil.stringValue;
-import static net.pincette.json.JsonUtil.toJsonPointer;
 import static net.pincette.json.Transform.transform;
 import static net.pincette.jwt.Util.getJwtPayload;
 import static net.pincette.mongo.JsonClient.aggregate;
 import static net.pincette.util.Collections.concat;
+import static net.pincette.util.Collections.flatten;
 import static net.pincette.util.Collections.list;
 import static net.pincette.util.Collections.map;
 import static net.pincette.util.Or.tryWith;
 import static net.pincette.util.Pair.pair;
-import static net.pincette.util.Util.tryToGetRethrow;
+import static net.pincette.util.Util.replaceParameters;
+import static net.pincette.util.Util.tryToGet;
 import static net.pincette.util.Util.tryToGetSilent;
 
 import com.auth0.jwt.JWT;
@@ -110,6 +111,17 @@ public class ClaimsPlugin implements Plugin {
     return headers.firstValue(HOST).map(h -> h.split(":")[0]).orElse("");
   }
 
+  private static Map<String, String> flattenToken(final JsonObject token) {
+    return map(
+        flatten(token, ".").entrySet().stream()
+            .map(
+                e ->
+                    pair(
+                        e.getKey(),
+                        stringValue(createValue(e.getValue()))
+                            .orElseGet(() -> e.getValue().toString()))));
+  }
+
   private static RequestResult forwardWithToken(
       final HttpHeaders headers, final String token, final boolean cookie) {
     final RequestResult result = new RequestResult().withRequest(setBearerToken(headers, token));
@@ -142,18 +154,21 @@ public class ClaimsPlugin implements Plugin {
 
   private static JsonArray resolveAggregationPipeline(
       final JsonArray aggregationPipeline, final JsonObject idTokenPayload) {
-    return transform(
-        aggregationPipeline,
-        new Transformer(
-            e -> isString(e.value),
-            e -> Optional.of(new JsonEntry(e.path, resolveScalar(e.value, idTokenPayload)))));
+    final Map<String, String> flattened = flattenToken(idTokenPayload);
+
+    final JsonArray result =
+        transform(
+            aggregationPipeline,
+            new Transformer(
+                e -> isString(e.value),
+                e -> Optional.of(new JsonEntry(e.path, resolveScalar(e.value, flattened)))));
+
+    return trace(result, () -> string(result, false));
   }
 
-  private static JsonValue resolveScalar(final JsonValue value, final JsonObject idTokenPayload) {
-    return stringValue(value)
-        .filter(s -> s.length() > 1 && s.charAt(0) == '$')
-        .flatMap(s -> getValue(idTokenPayload, toJsonPointer(s.substring(1))))
-        .orElse(value);
+  private static JsonValue resolveScalar(
+      final JsonValue value, final Map<String, String> flattened) {
+    return stringValue(value).map(s -> createValue(replaceParameters(s, flattened))).orElse(value);
   }
 
   private static HttpHeaders setBearerToken(final HttpHeaders headers, final String token) {
@@ -281,10 +296,14 @@ public class ClaimsPlugin implements Plugin {
   private void loadAggregationPipeline() {
     aggregationPipeline =
         requireNonNull(
-            tryToGetRethrow(
+            tryToGet(
                     () ->
                         createReader(new StringReader(config.getString(AGGREGATION_PIPELINE)))
-                            .read())
+                            .read(),
+                    e -> {
+                      LOGGER.severe(e::getMessage);
+                      return null;
+                    })
                 .flatMap(JsonUtil::arrayValue)
                 .orElse(null));
   }
