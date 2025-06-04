@@ -28,7 +28,6 @@ import static net.pincette.util.Or.tryWith;
 import static net.pincette.util.Pair.pair;
 import static net.pincette.util.Util.replaceParameters;
 import static net.pincette.util.Util.tryToGet;
-import static net.pincette.util.Util.tryToGetSilent;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -72,7 +71,6 @@ public class ClaimsPlugin implements Plugin {
   private static final String COOKIE = "Cookie";
   private static final String DATABASE = "database";
   private static final String HOST = "Host";
-  private static final String ISSUER = "issuer";
   private static final Logger LOGGER = getLogger("net.pincette.mongo.claims");
   private static final String MONGO_CLAIMS = "mongoClaims";
   private static final String MONGO_CLAIMS_COOKIE = "mongo_claims";
@@ -143,13 +141,18 @@ public class ClaimsPlugin implements Plugin {
         .map(s -> s[1]);
   }
 
-  private static boolean isYoungerThanIdToken(
+  private static boolean matchesIdToken(
       final DecodedJWT mongoClaimsToken, final HttpHeaders headers) {
     return getBearerToken(headers)
         .map(JWT::decode)
-        .map(DecodedJWT::getExpiresAtAsInstant)
-        .map(issued -> issued.isBefore(mongoClaimsToken.getExpiresAtAsInstant()))
+        .map(idToken -> matchesIdToken(mongoClaimsToken, idToken))
         .orElse(false);
+  }
+
+  private static boolean matchesIdToken(
+      final DecodedJWT mongoClaimsToken, final DecodedJWT idToken) {
+    return mongoClaimsToken.getIssuer().equals(idToken.getIssuer())
+        && idToken.getIssuedAtAsInstant().isBefore(mongoClaimsToken.getIssuedAtAsInstant());
   }
 
   private static JsonArray resolveAggregationPipeline(
@@ -232,7 +235,7 @@ public class ClaimsPlugin implements Plugin {
             JWT.create()
                 .withPayload(string(payload))
                 .withAudience(decoded.getAudience().toArray(String[]::new))
-                .withIssuer(getIssuer())
+                .withIssuer(decoded.getIssuer())
                 .withExpiresAt(decoded.getExpiresAtAsInstant().plus(ofSeconds(5)))
                 .withIssuedAt(now()));
   }
@@ -259,12 +262,6 @@ public class ClaimsPlugin implements Plugin {
     return mongoCollection;
   }
 
-  private String getIssuer() {
-    reloadIfChanged();
-
-    return tryToGetSilent(() -> config.getString(ISSUER)).orElse("");
-  }
-
   private Signer getSigner() {
     reloadIfChanged();
 
@@ -276,7 +273,7 @@ public class ClaimsPlugin implements Plugin {
 
     return ofNullable(token)
         .flatMap(getVerifier()::verify)
-        .filter(t -> isYoungerThanIdToken(t, headers))
+        .filter(t -> matchesIdToken(t, headers))
         .map(t -> token);
   }
 
