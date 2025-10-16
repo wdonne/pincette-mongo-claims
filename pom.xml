@@ -6,7 +6,7 @@
 
   <groupId>net.pincette</groupId>
   <artifactId>pincette-mongo-claims</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
   <name>pincette-mongo-claims</name>
   <description>Enriches a JWT with claims from a MongoDB query</description>
   <url>https://github.com/wdonne/pincette-mongo-claims</url>
@@ -43,41 +43,57 @@
   </licenses>
 
   <properties>
-    <maven.compiler.target>17</maven.compiler.target>
-    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <maven.compiler.source>21</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>2.35.8</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-http-headers-plugin</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.1</version>
     </dependency>
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-common</artifactId>
-      <version>2.5.3</version>
+      <version>2.5.5</version>
     </dependency>
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-mongo</artifactId>
-      <version>4.1.14</version>
+      <version>4.3.1</version>
     </dependency>
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-jwt</artifactId>
-      <version>1.1.2</version>
+      <version>1.1.4</version>
     </dependency>
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-json</artifactId>
-      <version>2.2.1</version>
+      <version>2.3.3</version>
     </dependency>
     <dependency>
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
       <version>1.4.3</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>sts</artifactId>
     </dependency>
   </dependencies>
 
@@ -86,7 +102,7 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.4.5</version>
+        <version>3.4.6</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -123,7 +139,7 @@
               <arg>-c</arg>
               <arg>/install.sh</arg>
             </entrypoint>
-            <user>1000:1000</user>
+            <user>11000:11000</user>
           </container>
           <extraDirectories>
             <paths>src/main/jib</paths>
