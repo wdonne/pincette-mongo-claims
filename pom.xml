@@ -6,7 +6,7 @@
 
   <groupId>net.pincette</groupId>
   <artifactId>pincette-mongo-claims</artifactId>
-  <version>1.0.5</version>
+  <version>1.0.6</version>
   <name>pincette-mongo-claims</name>
   <description>Enriches a JWT with claims from a MongoDB query</description>
   <url>https://github.com/wdonne/pincette-mongo-claims</url>
@@ -53,7 +53,7 @@
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
         <artifactId>bom</artifactId>
-        <version>2.35.8</version>
+        <version>2.36.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -74,7 +74,7 @@
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-mongo</artifactId>
-      <version>4.3.1</version>
+      <version>4.3.2</version>
     </dependency>
     <dependency>
       <groupId>net.pincette</groupId>
@@ -84,7 +84,7 @@
     <dependency>
       <groupId>net.pincette</groupId>
       <artifactId>pincette-json</artifactId>
-      <version>2.3.3</version>
+      <version>2.3.2</version>
     </dependency>
     <dependency>
       <groupId>com.typesafe</groupId>
